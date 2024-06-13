@@ -200,6 +200,7 @@ function renderParagraph(tokens: Token[], renderState: RenderState) {
 //     });
 // }
 
+// todo: apply style https://prismjs.com/themes/prism-okaidia.css
 function renderCode(code: string, infostring: string | undefined, escaped: boolean, renderState: RenderState): void {
     const prevFont = renderState.doc.getFont();
     const prevFontSize = renderState.doc.getFontSize();
@@ -244,8 +245,11 @@ function renderCode(code: string, infostring: string | undefined, escaped: boole
             leftPadding: 5,
             rightPadding: 5
         }, rects)
+    } else {
+        // todo: If not exists
     }
 
+    renderState.y += 10;
     renderState.doc.setFont(prevFont.fontName, prevFont.fontStyle);
     renderState.doc.setFontSize(prevFontSize);
 }
