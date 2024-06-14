@@ -3,7 +3,8 @@ import React from 'react';
 import jsPDF from 'jspdf';
 import {marked} from "marked";
 import {sampleMarkdown} from "./SampleData.ts";
-import {getRenderState, renderMarkdown} from "./PdfRenderer.ts";
+import {renderMarkdown} from "./PdfRenderer.ts";
+import {getRenderState} from "./RenderState.ts";
 
 interface Props {
 
