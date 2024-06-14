@@ -22,7 +22,7 @@ export default function renderCode(code: string, infostring: string | undefined,
     const unescapedCode = escaped ? unescape(code) : code;
     const prismLang: Prism.Grammar | undefined = (lang) ? Prism.languages[lang] : undefined;
     const prismTokens = prismLang ? Prism.tokenize(
-        unescapedCode.replace(/\n$/, '') + '\n', prismLang) : [unescapedCode];
+        unescapedCode.replace(/\n$/, '') + '\n', prismLang) : [unescapedCode, '\n'];
     const virtualRenderState: VirtualRenderState = {
         rects: [],
         lastRect: {startY: renderState.y, endY: renderState.y}
@@ -37,15 +37,16 @@ export default function renderCode(code: string, infostring: string | undefined,
     const rects = virtualRenderState.rects;
     rects.push({...virtualRenderState.lastRect});
 
-    console.log(virtualRenderState.lastRect);
     const firstRect = rects.shift()!;
-    const totalTextWidth = renderState.pageWidth - innerRenderState.leftPadding - innerRenderState.rightPadding;
-    renderState.doc.setFillColor('#272822');
-    renderState.doc.rect(
-        leftMargin,
-        firstRect.startY - renderState.doc.getFontSize(),
-        totalTextWidth + innerRenderState.leftPadding + innerRenderState.rightPadding,
-        firstRect.endY - firstRect.startY, 'F');
+    if (firstRect.startY != firstRect.endY) {
+        const totalTextWidth = renderState.pageWidth - innerRenderState.leftPadding - innerRenderState.rightPadding;
+        renderState.doc.setFillColor('#272822');
+        renderState.doc.rect(
+            leftMargin,
+            firstRect.startY - renderState.doc.getFontSize(),
+            totalTextWidth + innerRenderState.leftPadding + innerRenderState.rightPadding,
+            firstRect.endY - firstRect.startY, 'F');
+    }
 
     _renderCode(prismTokens, renderState, {
         x: 0,
