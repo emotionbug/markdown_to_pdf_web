@@ -1,4 +1,23 @@
-import jsPDF from "jspdf";
+import jsPDF, {Font} from "jspdf";
+
+interface SavedDocState {
+    readonly font: Font;
+    readonly fontSize: number;
+    readonly textColor: string;
+}
+
+export function getCurrentDocState(doc: jsPDF): SavedDocState {
+    const font = doc.getFont();
+    const fontSize = doc.getFontSize();
+    const textColor = doc.getTextColor();
+    return {font, fontSize, textColor};
+}
+
+export function restoreDocState(doc: jsPDF, state: SavedDocState) {
+    doc.setFont(state.font.fontName, state.font.fontStyle);
+    doc.setFontSize(state.fontSize);
+    doc.setTextColor(state.textColor);
+}
 
 export function getMinimumFontSize(doc: jsPDF) {
     return doc.internal.scaleFactor / doc.getFontSize();

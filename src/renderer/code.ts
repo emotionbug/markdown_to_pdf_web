@@ -2,7 +2,7 @@ import RenderState from "../RenderState.ts";
 import {unescape} from "../helper.ts";
 import Prism, {TokenStream} from "prismjs";
 import {defaultLineHeight, leftMargin, topMargin} from "../Consts.ts";
-import {getMinimumFontSize, splitTextAtMaxLen} from "../RendererHelper.ts";
+import {getCurrentDocState, getMinimumFontSize, restoreDocState, splitTextAtMaxLen} from "../RendererHelper.ts";
 
 interface InnerRenderState {
     x: number;
@@ -12,8 +12,7 @@ interface InnerRenderState {
 }
 
 export default function renderCode(code: string, infostring: string | undefined, escaped: boolean, renderState: RenderState): void {
-    const prevFont = renderState.doc.getFont();
-    const prevFontSize = renderState.doc.getFontSize();
+    const prevState = getCurrentDocState(renderState.doc);
 
     renderState.doc.setFont('D2Coding', 'normal');
     renderState.doc.setFontSize(10);
@@ -56,14 +55,13 @@ export default function renderCode(code: string, infostring: string | undefined,
     }, rects)
 
     renderState.y += 10;
-    renderState.doc.setFont(prevFont.fontName, prevFont.fontStyle);
-    renderState.doc.setFontSize(prevFontSize);
+
+    restoreDocState(renderState.doc, prevState);
 }
 
 // todo: apply style https://prismjs.com/themes/prism-okaidia.css
 function _renderTextInner(tokenText: string, renderState: RenderState, innerRenderState: InnerRenderState, rects: VirtualRect[], type?: string): void {
-    const prevTextColor = renderState.doc.getTextColor();
-    const prevFont = renderState.doc.getFont();
+    const prevState = getCurrentDocState(renderState.doc);
 
     if (type) {
         switch (type) {
@@ -179,8 +177,7 @@ function _renderTextInner(tokenText: string, renderState: RenderState, innerRend
         }
     }
 
-    renderState.doc.setTextColor(prevTextColor);
-    renderState.doc.setFont(prevFont.fontName, prevFont.fontStyle);
+    restoreDocState(renderState.doc, prevState);
 }
 
 interface VirtualRenderState {

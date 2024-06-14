@@ -1,15 +1,13 @@
 import {Token} from "marked";
 import RenderState from "../RenderState.ts";
 import {defaultLineHeight, leftMargin, topMargin} from "../Consts.ts";
-import {getMinimumFontSize, splitTextAtMaxLen} from "../RendererHelper.ts";
+import {getCurrentDocState, getMinimumFontSize, restoreDocState, splitTextAtMaxLen} from "../RendererHelper.ts";
 
 export default function renderParagraph(tokens: Token[], renderState: RenderState) {
     const lineHeight = renderState.doc.getFontSize() * defaultLineHeight;
     let xPos = leftMargin;
 
-    const prevTextColor = renderState.doc.getTextColor();
-    const prevFont = renderState.doc.getFont();
-    const prevFillColor = renderState.doc.getFillColor();
+    const prevState = getCurrentDocState(renderState.doc);
     for (let i = 0; i < tokens.length; i++) {
         let linkHref: string | undefined = undefined;
         let isCodeSpan = false;
@@ -71,9 +69,7 @@ export default function renderParagraph(tokens: Token[], renderState: RenderStat
             }
         }
 
-        renderState.doc.setTextColor(prevTextColor);
-        renderState.doc.setFont(prevFont.fontName, prevFont.fontStyle);
-        renderState.doc.setFillColor(prevFillColor);
+        restoreDocState(renderState.doc, prevState);
     }
     if (xPos > leftMargin) {
         renderState.y += lineHeight;
