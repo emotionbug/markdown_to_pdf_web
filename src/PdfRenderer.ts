@@ -200,7 +200,6 @@ function renderParagraph(tokens: Token[], renderState: RenderState) {
 //     });
 // }
 
-// todo: apply style https://prismjs.com/themes/prism-okaidia.css
 function renderCode(code: string, infostring: string | undefined, escaped: boolean, renderState: RenderState): void {
     const prevFont = renderState.doc.getFont();
     const prevFontSize = renderState.doc.getFontSize();
@@ -210,51 +209,129 @@ function renderCode(code: string, infostring: string | undefined, escaped: boole
 
     const lang = (infostring || '').match(/^\S*/)?.[0];
 
-    let unescapedCode = code.replace(/\n$/, '') + '\n';
-    unescapedCode = escaped ? unescape(code) : unescapedCode;
-
+    const unescapedCode = escaped ? unescape(code) : code;
     const prismLang: Prism.Grammar | undefined = (lang) ? Prism.languages[lang] : undefined;
-    if (prismLang) {
-        const prismTokens = Prism.tokenize(unescapedCode, prismLang);
-        const virtualRenderState: VirtualRenderState = {
-            rects: [],
-            lastRect: {startY: renderState.y, endY: renderState.y}
-        };
-        const innerRenderState: InnerRenderState = {
-            x: 0,
-            lineHeight: renderState.doc.getFontSize() * 1.5,
-            leftPadding: 5,
-            rightPadding: 5
-        };
-        virtualRenderCode(prismTokens, renderState, innerRenderState, virtualRenderState)
-        const rects = virtualRenderState.rects;
-        rects.push({...virtualRenderState.lastRect});
+    const prismTokens = prismLang ? Prism.tokenize(
+        unescapedCode.replace(/\n$/, '') + '\n', prismLang) : [unescapedCode];
+    const virtualRenderState: VirtualRenderState = {
+        rects: [],
+        lastRect: {startY: renderState.y, endY: renderState.y}
+    };
+    const innerRenderState: InnerRenderState = {
+        x: 0,
+        lineHeight: renderState.doc.getFontSize() * 1.5,
+        leftPadding: 5,
+        rightPadding: 5
+    };
+    virtualRenderCode(prismTokens, renderState, innerRenderState, virtualRenderState)
+    const rects = virtualRenderState.rects;
+    rects.push({...virtualRenderState.lastRect});
 
-        const firstRect = rects.shift()!;
-        const totalTextWidth = renderState.pageWidth - innerRenderState.leftPadding - innerRenderState.rightPadding;
-        renderState.doc.setFillColor(253, 255, 226);
-        renderState.doc.rect(
-            leftMargin,
-            firstRect.startY - renderState.doc.getFontSize(),
-            totalTextWidth + innerRenderState.leftPadding + innerRenderState.rightPadding,
-            firstRect.endY - firstRect.startY, 'F');
+    const firstRect = rects.shift()!;
+    const totalTextWidth = renderState.pageWidth - innerRenderState.leftPadding - innerRenderState.rightPadding;
+    renderState.doc.setFillColor('#272822');
+    renderState.doc.rect(
+        leftMargin,
+        firstRect.startY - renderState.doc.getFontSize(),
+        totalTextWidth + innerRenderState.leftPadding + innerRenderState.rightPadding,
+        firstRect.endY - firstRect.startY, 'F');
 
-        _renderCode(prismTokens, renderState, {
-            x: 0,
-            lineHeight: renderState.doc.getFontSize() * 1.5,
-            leftPadding: 5,
-            rightPadding: 5
-        }, rects)
-    } else {
-        // todo: If not exists
-    }
+    _renderCode(prismTokens, renderState, {
+        x: 0,
+        lineHeight: renderState.doc.getFontSize() * 1.5,
+        leftPadding: 5,
+        rightPadding: 5
+    }, rects)
 
     renderState.y += 10;
     renderState.doc.setFont(prevFont.fontName, prevFont.fontStyle);
     renderState.doc.setFontSize(prevFontSize);
 }
 
+// todo: apply style https://prismjs.com/themes/prism-okaidia.css
 function _renderTextInner(tokenText: string, renderState: RenderState, innerRenderState: InnerRenderState, rects: VirtualRect[], type?: string): void {
+    const prevTextColor = renderState.doc.getTextColor();
+    const prevFont = renderState.doc.getFont();
+
+    if (type) {
+        switch (type) {
+            case "comment":
+            case "prolog":
+            case "doctype":
+            case "cdata": {
+                renderState.doc.setTextColor("#8292a2");
+                break;
+            }
+            case "punctuation":
+                renderState.doc.setTextColor("#f8f8f2");
+                break;
+            case "namespace":
+                renderState.doc.setTextColor("#b9bab4");
+                break;
+            case "property":
+            case "tag":
+            case "constant":
+            case "symbol":
+            case "deleted": {
+                renderState.doc.setTextColor("#f92672");
+                break;
+            }
+            case "boolean":
+            case "number": {
+                renderState.doc.setTextColor("#ae81ff");
+                break;
+            }
+            case "selector":
+            case "attr-name":
+            case "string":
+            case "char":
+            case "builtin":
+            case "inserted": {
+                renderState.doc.setTextColor("#a6e22e");
+                break;
+            }
+            case "operator":
+            case "entity":
+            case "url":
+            case "variable": {
+                renderState.doc.setTextColor("#f8f8f2");
+                break;
+            }
+
+            case "atrule":
+            case "attr-value":
+            case "function":
+            case "class-name": {
+                renderState.doc.setTextColor("#e6db74");
+                break;
+            }
+            case "keyword":
+                renderState.doc.setTextColor("#66d9ef");
+                break;
+            case "regex":
+            case "important": {
+                renderState.doc.setTextColor("#fd971f");
+                break;
+            }
+            default:
+                renderState.doc.setTextColor('#f8f8f2');
+                break;
+        }
+
+        switch (type) {
+            case "bold":
+            case "important": {
+                renderState.doc.setFont('D2Coding', 'bold');
+                break;
+            }
+            case "italic":
+                // todo: find out
+                break;
+        }
+    } else {
+        renderState.doc.setTextColor('#f8f8f2');
+    }
+
     const totalTextWidth = renderState.pageWidth - innerRenderState.leftPadding - innerRenderState.rightPadding;
     while (tokenText.length > 0) {
         const [toPrint, rest, forceNewLine] = splitTextAtMaxLen(tokenText, totalTextWidth - innerRenderState.x, renderState.doc);
@@ -264,7 +341,7 @@ function _renderTextInner(tokenText: string, renderState: RenderState, innerRend
                 renderState.y = topMargin;
 
                 const virtualRect = rects.shift()!;
-                renderState.doc.setFillColor(253, 255, 226);
+                renderState.doc.setFillColor('#272822');
                 renderState.doc.rect(
                     leftMargin,
                     virtualRect.startY - renderState.doc.getFontSize(),
@@ -289,6 +366,9 @@ function _renderTextInner(tokenText: string, renderState: RenderState, innerRend
             innerRenderState.x = 0;
         }
     }
+
+    renderState.doc.setTextColor(prevTextColor);
+    renderState.doc.setFont(prevFont.fontName, prevFont.fontStyle);
 }
 
 interface VirtualRenderState {
